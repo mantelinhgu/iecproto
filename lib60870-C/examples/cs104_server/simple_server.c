@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
+#include <time.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include "cs104_slave.h"
 
@@ -64,22 +67,15 @@ static bool
 interrogationHandler(void* parameter, IMasterConnection connection, CS101_ASDU asdu, uint8_t qoi)
 {
     printf("Received interrogation for group %i\n", qoi);
-    
-    int n=1; 
-    char filename[]="di.txt";//etc/snmp/dioinfo.txt
-    char buff[100];
-    char *delimeter = "=";
-    char *token;
+    char string[50];
+    int n=0,m; 
+    char *deliptr;
+    char filename[]="/etc/snmp/dioinfo.txt";
+    char buff[10];
+    char delimeter ='=';
     FILE *file;
-    char str1[]="diopin1";
-    char str2[]="diopin2";
-    char str3[]="diopin3";
-    char str4[]="diopin4";
-    file=fopen(filename,"r");
-    if(file!=0)// file == 0 opened fail ,file = 1 success
-    {
-    printf("open file succesfully\n");
-    }  
+    
+    
 
     if (qoi == 20) { /* only handle station interrogation */
 
@@ -126,91 +122,67 @@ interrogationHandler(void* parameter, IMasterConnection connection, CS101_ASDU a
 
         newAsdu = CS101_ASDU_create(alParams, true, CS101_COT_INTERROGATED_BY_STATION,
                 0, 1, false, false);
+                int i=0;
+             //   CS101_ASDU_addInformationObject(newAsdu, io = (InformationObject) SinglePointInformation_create(NULL, 1, true, IEC60870_QUALITY_GOOD));
+   /*  while(1)
+      { 
+        i++;
+        CS101_ASDU_addInformationObject(newAsdu, io = (InformationObject) SinglePointInformation_create(NULL, i, true, IEC60870_QUALITY_GOOD));
+        IMasterConnection_sendASDU(connection, newAsdu);
+        sleep(2);
+        if(i==10)
+        {
+            i=0;
+        }
+      }*/
+    
+        file=fopen(filename,"r");
+        if(file!=0) // file == 0 opened fail ,file = 1 success
+        {
+            printf("open file succesfully\n");
+        }  
+        while(1)
+        {
+            while(fscanf(file,"%s",string))
+            {
+             
+               printf("%s\n",string);
+                deliptr=strchr(string,delimeter);
+                if(deliptr!=NULL)
+                {
+                    
+                    strcpy(buff,deliptr+1);
+                    m=atoi(buff);
+                    n++;
+                    //printf("m=%d\n",m);
+                    if(m==1)
+                    {
+                        CS101_ASDU_addInformationObject(newAsdu, io = (InformationObject) SinglePointInformation_create(NULL, n, true, IEC60870_QUALITY_GOOD));
+                        IMasterConnection_sendASDU(connection, newAsdu);
+                    }
+                    else if(m==0)
+                    {
+                        CS101_ASDU_addInformationObject(newAsdu, io = (InformationObject) SinglePointInformation_create(NULL, n, false, IEC60870_QUALITY_GOOD));
+                        IMasterConnection_sendASDU(connection, newAsdu);
+                    }
+                }
+               // printf("n = %d\n",n);
+                if(n==4)
+                {
+                    n=0;
+                }
                 
-        while((fgets(buff,sizeof(buff),file)))//fgets == 0 opened fail ,fgets = 1 success
-{
-	if(n==1)
-	{
-		if (strstr(buff, str1) != NULL)
-		{
-		 token = strtok(buff,delimeter);
-		 token = strtok(NULL, delimeter);
-		 int i = atoi(token);
-		 printf("di1 = %d\n",i);
-         if(i==1)
-         {
-            CS101_ASDU_addInformationObject(newAsdu, io = (InformationObject) SinglePointInformation_create(NULL, 1, true, IEC60870_QUALITY_GOOD));
-         }
-         else if(i==0)
-         {
-            CS101_ASDU_addInformationObject(newAsdu, io = (InformationObject) SinglePointInformation_create(NULL, 1, false, IEC60870_QUALITY_GOOD));
-         }
-		}
-		n++;
-	}
-	 
-	else if(n==2)
-	{
-		if (strstr(buff, str2) != NULL)
-		{
-		 token = strtok(buff,delimeter);
-		 token = strtok(NULL, delimeter);
-         int i = atoi(token);		
-         printf("di2 = %d\n",i);
-         if(i==1)
-         {
-            CS101_ASDU_addInformationObject(newAsdu, io = (InformationObject) SinglePointInformation_create(NULL, 2, true, IEC60870_QUALITY_GOOD));
-         }
-         else if(i==0)
-         {
-            CS101_ASDU_addInformationObject(newAsdu, io = (InformationObject) SinglePointInformation_create(NULL, 2, false, IEC60870_QUALITY_GOOD));
-         }
-		}
-        n++;
-	}
-    else if(n==3)
-	{
-		if (strstr(buff, str3) != NULL)
-		{
-		 token = strtok(buff,delimeter);
-		 token = strtok(NULL, delimeter);
-         int i = atoi(token);		
-         printf("di3 = %d\n",i);
-         if(i==1)
-         {
-            CS101_ASDU_addInformationObject(newAsdu, io = (InformationObject) SinglePointInformation_create(NULL, 3, true, IEC60870_QUALITY_GOOD));
-         }
-         else if(i==0)
-         {
-            CS101_ASDU_addInformationObject(newAsdu, io = (InformationObject) SinglePointInformation_create(NULL, 3, false, IEC60870_QUALITY_GOOD));
-         }
-		}
-        n++;
-	}
-    else if(n==4)
-	{
-		if (strstr(buff, str4) != NULL)
-		{
-		 token = strtok(buff,delimeter);
-		 token = strtok(NULL, delimeter);
-         int i = atoi(token);		
-         printf("di3 = %d\n",i);
-         if(i==1)
-         {
-            CS101_ASDU_addInformationObject(newAsdu, io = (InformationObject) SinglePointInformation_create(NULL, 4, true, IEC60870_QUALITY_GOOD));
-         }
-         else if(i==0)
-         {
-            CS101_ASDU_addInformationObject(newAsdu, io = (InformationObject) SinglePointInformation_create(NULL, 4, false, IEC60870_QUALITY_GOOD));
-         }
-		}
-	}
-
- else
- {
- printf("no register mapped with %d",n);
- }
-}
+                if (feof(file)) 
+                {
+                    fseek(file, 0, SEEK_SET);
+                    file = fopen(filename,"r");
+                }
+                
+                sleep(1);
+            }
+        }
+        fclose(file);
+         
 
        // CS101_ASDU_addInformationObject(newAsdu, io = (InformationObject) SinglePointInformation_create(NULL, 1, true, IEC60870_QUALITY_GOOD));
        // CS101_ASDU_addInformationObject(newAsdu, (InformationObject) SinglePointInformation_create((SinglePointInformation) io, 2, false, IEC60870_QUALITY_GOOD));
@@ -223,7 +195,7 @@ interrogationHandler(void* parameter, IMasterConnection connection, CS101_ASDU a
 
         //InformationObject_destroy(io);
 
-        IMasterConnection_sendASDU(connection, newAsdu);
+       // IMasterConnection_sendASDU(connection, newAsdu);
 
         CS101_ASDU_destroy(newAsdu);
 
@@ -387,22 +359,22 @@ main(int argc, char** argv)
 
    while (running) {
 
-        Thread_sleep(1000);
+       // Thread_sleep(1000);
 
       //  CS101_ASDU newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
 
       //  InformationObject io = (InformationObject) MeasuredValueScaled_create(NULL, 100, scaledValue, IEC60870_QUALITY_GOOD);
 
-      //  scaledValue++;
+       // scaledValue++;
 
-      //  CS101_ASDU_addInformationObject(newAsdu, io);
+       // CS101_ASDU_addInformationObject(newAsdu, io);
 
-      //  InformationObject_destroy(io);
+       // InformationObject_destroy(io);
 
         /* Add ASDU to slave event queue */
        // CS104_Slave_enqueueASDU(slave, newAsdu);
 
-      //  CS101_ASDU_destroy(newAsdu);
+       // CS101_ASDU_destroy(newAsdu);
     }
 
     CS104_Slave_stop(slave);

@@ -1,7 +1,7 @@
 LIB60870_HOME=../..
 
 PROJECT_BINARY_NAME = simple_server
-PROJECT_SOURCES = simple_server_demo.c
+PROJECT_SOURCES =    simple_server_demo.c
 
 include $(LIB60870_HOME)/make/target_system.mk
 include $(LIB60870_HOME)/make/stack_includes.mk
