@@ -1,0 +1,4 @@
+diopin1=0
+diopin2=0
+diopin3=1
+diopin4=0
