@@ -273,10 +273,10 @@ typedef struct sCS104_APCIParameters* CS104_APCIParameters;
 struct sCS104_APCIParameters {
     int k;
     int w;
-    int t0;
-    int t1;
-    int t2;
-    int t3;
+    int t0:10;
+    int t1:15;
+    int t2:10;
+    int t3:20;
 };
 
 #include "cs101_information_objects.h"

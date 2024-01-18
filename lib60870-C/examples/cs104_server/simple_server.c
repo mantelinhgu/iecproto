@@ -36,7 +36,7 @@ static void
 rawMessageHandler(void* parameter, IMasterConnection conneciton, uint8_t* msg, int msgSize, bool sent)
 {
     if (sent)
-        printf("SEND: ");
+        printf("SEND: "); 
     else
         printf("RCVD: ");
 
@@ -135,15 +135,30 @@ interrogationHandler(void* parameter, IMasterConnection connection, CS101_ASDU a
             i=0;
         }
       }*/
+      //char str1[10]="diopin1=1";
     
         file=fopen(filename,"r");
         if(file!=0) // file == 0 opened fail ,file = 1 success
         {
             printf("open file succesfully\n");
         }  
+
+        if(fgets(string,sizeof(string),file)!=NULL)
+        {
+            printf("%s",string);
+             deliptr=strchr(string,delimeter);
+                if(deliptr!=NULL)
+                {
+                    strcpy(buff,deliptr+1);
+                    m=atoi(buff);
+                   // printf("m=%d\n",m);
+                }            
+        }
+        if(m==1)
+    {
         while(1)
         {
-            while(fscanf(file,"%s",string))
+            while(fscanf(file,"%s",string)!= EOF)
             {
              
                printf("%s\n",string);
@@ -171,18 +186,29 @@ interrogationHandler(void* parameter, IMasterConnection connection, CS101_ASDU a
                 {
                     n=0;
                 }
-                
+                sleep(1);
+            }
                 if (feof(file)) 
                 {
                     fseek(file, 0, SEEK_SET);
-                    file = fopen(filename,"r");
+                    
+                    if (fgets(string, sizeof(string), file) == NULL) 
+                    {
+                      // printf("Error reading the first line\n");
+                        fclose(file);
+                        return 1;
+                    
+                    }
                 }
                 
-                sleep(1);
-            }
+               // sleep(1);
         }
+    }
+    else
+    {
+        printf("alarm is not there \n");
         fclose(file);
-         
+    }     
 
        // CS101_ASDU_addInformationObject(newAsdu, io = (InformationObject) SinglePointInformation_create(NULL, 1, true, IEC60870_QUALITY_GOOD));
        // CS101_ASDU_addInformationObject(newAsdu, (InformationObject) SinglePointInformation_create((SinglePointInformation) io, 2, false, IEC60870_QUALITY_GOOD));
@@ -317,10 +343,13 @@ main(int argc, char** argv)
     /* get the connection parameters - we need them to create correct ASDUs -
      * you can also modify the parameters here when default parameters are not to be used */
     CS101_AppLayerParameters alParams = CS104_Slave_getAppLayerParameters(slave);
-
+        
     /* when you have to tweak the APCI parameters (t0-t3, k, w) you can access them here */
     CS104_APCIParameters apciParams = CS104_Slave_getConnectionParameters(slave);
-
+ apciParams->t0 = 10;
+ apciParams->t1=10;
+ apciParams->t2=10;
+ apciParams->t3=10;
     printf("APCI parameters:\n");
     printf("  t0: %i\n", apciParams->t0);
     printf("  t1: %i\n", apciParams->t1);
